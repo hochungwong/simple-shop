@@ -5,7 +5,7 @@ const app = express();
 
 const errorController = require("./controllers/error");
 
-const mongoConnect = require("./util/mongodb");
+const mongoConnect = require("./util/mongodb").mongoConnect;
 
 app.set("view engine", "ejs");
 app.set("views", "views");
@@ -15,7 +15,7 @@ const shopRoutes = require("./routes/shop");
 
 app.use(
   bodyParser.urlencoded({
-    extended: false
+    extended: false,
   })
 );
 app.use(express.static(path.join(__dirname, "public")));
@@ -29,6 +29,7 @@ app.use((req, res, next) => {
   //   .catch(err => {
   //     console.log(err);
   //   });
+  next();
 });
 
 app.use("/admin", adminRoutes);
@@ -36,7 +37,7 @@ app.use(shopRoutes); // '/'
 
 app.use(errorController.get404);
 
-mongoConnect(client => {
+mongoConnect((client) => {
   console.log(client);
   app.listen(3000);
 });
