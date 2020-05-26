@@ -11,16 +11,12 @@ exports.getAddProduct = (req, res, next) => {
 
 exports.postAddProduct = (req, res, next) => {
   const { title, imageUrl, description, price } = req.body;
-  const product = new Product(
+  const product = new Product({
     title,
     price,
     description,
-    imageUrl,
-    null,
-    req.user._id
-  );
-  //new product
-  //sequelize association function
+    imageUrl
+  });
   product
     .save()
     .then(result => {

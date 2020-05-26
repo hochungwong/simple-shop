@@ -1,8 +1,9 @@
 const Product = require("../models/product");
 
 exports.getProducts = (req, res, next) => {
-  Product.fetchAll()
+  Product.find()
     .then(products => {
+      console.log(products);
       res.render("shop/product-list", {
         prods: products,
         pageTitle: "All Products",
@@ -30,7 +31,7 @@ exports.getProduct = (req, res, next) => {
 };
 
 exports.getIndex = (req, res, next) => {
-  Product.fetchAll()
+  Product.find()
     .then(products => {
       res.render("shop/index", {
         prods: products,
@@ -73,18 +74,7 @@ exports.postCart = (req, res, next) => {
 exports.postCartDeleteProduct = (req, res, next) => {
   const { productId } = req.body;
   req.user
-    .getCart()
-    .then(cart => {
-      return cart.getProducts({
-        where: {
-          id: productId
-        }
-      });
-    })
-    .then(products => {
-      const product = products[0];
-      return product.cartItem.destroy();
-    })
+    .deleteItemFromCart(productId)
     .then(result => {
       res.redirect("/cart");
     })
@@ -96,32 +86,7 @@ exports.postCartDeleteProduct = (req, res, next) => {
 exports.postOrder = (req, res, next) => {
   let fetchedCart;
   req.user
-    .getCart()
-    .then(cart => {
-      fetchedCart = cart;
-      return cart.getProducts();
-    })
-    .then(products => {
-      return req.user
-        .createOrder()
-        .then(order => {
-          return order.addProducts(
-            products.map(product => {
-              product.orderItem = {
-                quantity: product.cartItem.quantity
-              };
-              return product;
-            })
-          );
-        })
-        .catch(err => {
-          console.log(err);
-        });
-    })
-    .then(result => {
-      //reset the cart
-      return fetchedCart.setProducts(null);
-    })
+    .addOrder()
     .then(result => {
       res.redirect("/orders");
     })
@@ -132,15 +97,8 @@ exports.postOrder = (req, res, next) => {
 
 exports.getOrders = (req, res, next) => {
   req.user
-    .getOrders({ include: ["products"] })
+    .getOrders()
     .then(orders => {
-      orders.forEach(order => {
-        console.log("order", order.createdAt);
-        order.products.forEach(product => {
-          console.log("title ", product.title);
-          console.log("quantity", product.orderItem.createdAt);
-        });
-      });
       res.render("shop/orders", {
         pageTitle: "Your Orders",
         path: "/orders",

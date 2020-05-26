@@ -3,19 +3,19 @@ const MongoClient = mongodb.MongoClient;
 
 let _db;
 
-const mongoConnect = (callBack) => {
+const mongoConnect = callBack => {
   MongoClient.connect(
     "mongodb+srv://carsonwong:zxvy123@carsoncluster-y0mmo.mongodb.net/shop?retryWrites=true&w=majority",
     {
-      useUnifiedTopology: true,
+      useUnifiedTopology: true
     }
   )
-    .then((client) => {
+    .then(client => {
       console.log("Connected to MongoDB");
       _db = client.db();
       callBack();
     })
-    .catch((err) => {
+    .catch(err => {
       console.log(err);
       throw err;
     });
