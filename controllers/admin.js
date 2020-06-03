@@ -9,6 +9,7 @@ exports.getAddProduct = (req, res, next) => {
   });
 };
 
+//create product
 exports.postAddProduct = (req, res, next) => {
   const { title, imageUrl, description, price } = req.body;
   const product = new Product({
@@ -16,6 +17,7 @@ exports.postAddProduct = (req, res, next) => {
     price,
     description,
     imageUrl,
+    userId: req.user, //mongoose extra userId automatically
   });
   product
     .save()
@@ -78,10 +80,13 @@ exports.postEditProduct = (req, res, next) => {
     });
 };
 
+//fetch all products
 exports.getProducts = (req, res, next) => {
   Product.find()
-    // Product.findAll()
+    //.select("title price imageUrl -_id") // selected field to fetch
+    //.populate("userId", "name") //concat field
     .then((products) => {
+      console.log("admin controller|getProducts", products);
       res.render("admin/products", {
         prods: products,
         pageTitle: "Admin Products",
