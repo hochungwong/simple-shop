@@ -8,4 +8,6 @@ router.get("/login", authController.getLogin);
 
 router.post("/login", authController.postLogin); //mimic login atm
 
+router.post("/logout", authController.postLogout);
+
 module.exports = router;
