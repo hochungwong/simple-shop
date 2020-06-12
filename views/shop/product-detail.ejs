@@ -15,6 +15,6 @@
         <p>
             <%= product.description %>
         </p>
-        <%- include("../includes/add-to-cart.ejs")%>
+        <%- include("../includes/add-to-cart.ejs", {product: product, isAuthenticated: isAuthenticated})%>
     </main>
     <%- include("../includes/end.ejs") %>

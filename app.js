@@ -15,7 +15,7 @@ const MONGODB_URI =
 
 const store = new MongoDBStore({
   uri: MONGODB_URI,
-  collection: "sessions"
+  collection: "sessions",
 });
 
 app.set("view engine", "ejs");
@@ -27,7 +27,7 @@ const authRoutes = require("./routes/auth");
 
 app.use(
   bodyParser.urlencoded({
-    extended: false
+    extended: false,
   })
 );
 app.use(express.static(path.join(__dirname, "public")));
@@ -36,9 +36,24 @@ app.use(
     secret: "my secret",
     resave: false, //save if something change in the session
     saveUninitialized: false,
-    store: store
+    store: store,
   })
 );
+
+app.use((req, res, next) => {
+  if (!req.session.user) {
+    //no user in session
+    return next();
+  }
+  User.findById(req.session.user._id)
+    .then((user) => {
+      req.user = user;
+      next();
+    })
+    .catch((err) => {
+      console.log(err);
+    });
+});
 
 app.use("/admin", adminRoutes);
 app.use(shopRoutes); // '/'
@@ -48,15 +63,15 @@ app.use(errorController.get404);
 
 mongoose
   .connect(MONGODB_URI)
-  .then(result => {
-    User.findOne().then(user => {
+  .then((result) => {
+    User.findOne().then((user) => {
       if (!user) {
         const user = new User({
           name: "Carson",
           email: "test@test.com",
           cart: {
-            items: []
-          }
+            items: [],
+          },
         });
         user.save();
       }
@@ -64,6 +79,6 @@ mongoose
 
     app.listen(3000);
   })
-  .catch(err => {
+  .catch((err) => {
     console.log(err);
   });

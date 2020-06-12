@@ -18,7 +18,7 @@ exports.postAddProduct = (req, res, next) => {
     price,
     description,
     imageUrl,
-    userId: req.session.user, //mongoose extra userId automatically
+    userId: req.user, //mongoose extra userId automatically
   });
   product
     .save()
