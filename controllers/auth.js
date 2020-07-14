@@ -4,6 +4,7 @@ const nodeMailer = require("nodemailer");
 const sendGridTransport = require("nodemailer-sendgrid-transport");
 
 const crypto = require("crypto");
+const { validationResult } = require("express-validator"); //get all the validation result - error, success
 
 const transporter = nodeMailer.createTransport(
   sendGridTransport({
@@ -78,6 +79,15 @@ exports.getSignup = (req, res, next) => {
 
 exports.postSignup = (req, res, next) => {
   const { email, password, confirmPassword } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    console.log(errors.array());
+    return res.status(422).render("auth/signup", {
+      path: "/signup",
+      pageTitle: "Sign Up",
+      errorMessage: errors.array()[0].msg,
+    });
+  }
   User.findOne({ email: email })
     .then((userDoc) => {
       if (userDoc) {
