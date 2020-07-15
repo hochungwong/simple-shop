@@ -2,12 +2,35 @@ const express = require("express");
 const { body, check } = require("express-validator");
 
 const authController = require("../controllers/auth");
+const User = require("../models/user");
 
 const router = express.Router();
 
 router.get("/login", authController.getLogin);
 
-router.post("/login", authController.postLogin);
+router.post(
+  "/login",
+  [
+    body("email")
+      .isEmail()
+      // .withMessage("Please enter a valid email.")
+      .custom((value, { req }) => {
+        return User.findOne({ email: value }).then((user) => {
+          if (!user) {
+            return Promise.reject(
+              `User with email ${value} not found or password not correct`
+            );
+          }
+          req.session.user = user;
+          return true;
+        });
+      }),
+    body("password", "Password has to be valid")
+      .isLength({ min: 5 })
+      .isAlphanumeric(),
+  ],
+  authController.postLogin
+);
 
 router.get("/signup", authController.getSignup);
 
@@ -18,10 +41,19 @@ router.post(
       .isEmail()
       .withMessage("Please enter a valid email!")
       .custom((value, { req }) => {
-        if (value === "test@test.com") {
-          throw new Error("This email address is forbidden");
-        }
-        return true;
+        // if (value === "test@test.com") {
+        //   throw new Error("This email address is forbidden");
+        // }
+        // return true;
+        //add async validation
+        return User.findOne({ email: value }).then((userDoc) => {
+          if (userDoc) {
+            //existing user
+            return Promise.reject(
+              "E-mail exists already, please pick a different one."
+            );
+          }
+        });
       }),
     body(
       "password",
@@ -29,6 +61,12 @@ router.post(
     )
       .isLength({ min: 5 })
       .isAlphanumeric(),
+    body("confirmPassword").custom((value, { req }) => {
+      if (value !== req.body.password) {
+        throw new Error("Password have to match!");
+      }
+      return true;
+    }),
   ],
   authController.postSignup
 );
