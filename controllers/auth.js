@@ -32,6 +32,7 @@ exports.getLogin = (req, res, next) => {
       password: "",
       confirmPassword: "",
     },
+    validationErrors: [],
   });
 };
 
@@ -48,35 +49,53 @@ exports.postLogin = (req, res, next) => {
         email: email,
         password: password,
       },
+      validationErrors: errors.array(),
     });
   }
-  // User.findOne({ email: email })
-  //   .then((user) => {
-  //     if (!user) {
-  //       req.flash("error", "Invalid email or password.");
-  //       return res.redirect("/login");
-  //     }
-  console.log(req.session.user.password, password);
-  bcrypt
-    .compare(password, req.session.user.password)
-    .then((doMatch) => {
-      if (doMatch) {
-        req.session.isLoggedIn = true;
-        //save user to session
-        // req.session.user = user;
-        //save session to database then redirect to index page
-        return req.session.save((err) => {
-          console.log(err);
-          res.redirect("/");
+  User.findOne({ email: email })
+    .then((user) => {
+      if (!user) {
+        return res.status(422).render("auth/login", {
+          path: "/login",
+          pageTitle: "Login",
+          errorMessage: "Invalid email",
+          oldInput: {
+            email: email,
+            password: password,
+          },
+          validationErrors: [],
         });
       }
-      res.redirect("/login");
+      bcrypt
+        .compare(password, user["password"])
+        .then((doMatch) => {
+          if (doMatch) {
+            req.session.isLoggedIn = true;
+            //save user to session
+            // req.session.user = user;
+            //save session to database then redirect to index page
+            return req.session.save((err) => {
+              console.log(err);
+              res.redirect("/");
+            });
+          }
+          //password not match
+          return res.status(422).render("auth/login", {
+            path: "/login",
+            pageTitle: "Login",
+            errorMessage: "Invalid password",
+            oldInput: {
+              email: email,
+              password: password,
+            },
+            validationErrors: [],
+          });
+        })
+        .catch((err) => {
+          console.log(err);
+          res.redirect("/login");
+        });
     })
-    .catch((err) => {
-      console.log(err);
-      res.redirect("/login");
-    })
-    // })
     .catch((err) => {
       console.log(err);
     });
@@ -98,6 +117,7 @@ exports.getSignup = (req, res, next) => {
       password: "",
       confirmPassword: "",
     },
+    validationErrors: [],
   });
 };
 
@@ -114,6 +134,7 @@ exports.postSignup = (req, res, next) => {
         password: password,
         confirmPassword: confirmPassword,
       },
+      validationErrors: errors.array(),
     });
   }
   bcrypt
