@@ -1,2 +1,2 @@
 # simple-shop
-ejs + express mvc practice
+ejs, express.js mvc + mongodb practice
