@@ -1,3 +1,4 @@
+const mongoose = require("mongoose");
 const mongoDb = require("mongodb");
 const Product = require("../models/product");
 
@@ -25,9 +26,9 @@ exports.getAddProduct = (req, res, next) => {
 
 //create product
 exports.postAddProduct = (req, res, next) => {
-  const { title, imageUrl, description, price } = req.body;
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
+  const { title, description, price } = req.body;
+  const image = req.file;
+  if (!image) {
     return res.status(422).render("admin/edit-product", {
       pageTitle: "Add Product",
       path: "/admin/add-product",
@@ -36,7 +37,25 @@ exports.postAddProduct = (req, res, next) => {
       product: {
         //return user input
         title: title,
-        imageUrl: imageUrl,
+        price: price,
+        description: description,
+      },
+      errorMessage: "Attached file is not an image",
+      validationErrors: [],
+    });
+  }
+  const imageUrl = image.path;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    //422 invalid input
+    return res.status(422).render("admin/edit-product", {
+      pageTitle: "Add Product",
+      path: "/admin/add-product",
+      editing: false,
+      hasError: true,
+      product: {
+        //return user input
+        title: title,
         price: price,
         description: description,
       },
@@ -54,11 +73,13 @@ exports.postAddProduct = (req, res, next) => {
   product
     .save()
     .then((result) => {
-      console.log("Created product");
+      console.log("Created Product");
       res.redirect("/admin/products");
     })
     .catch((err) => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error); //skip all the middleware, go direct to 500 page
     });
 };
 
@@ -85,7 +106,9 @@ exports.getEditProduct = (req, res, next) => {
       });
     })
     .catch((err) => {
-      console.log(err);
+      const error = new Error(err);
+      error.httpStatusCode = 500;
+      return next(error);
     });
 };
 
@@ -96,7 +119,7 @@ exports.postEditProduct = (req, res, next) => {
   const { productId } = req.body;
   const updatedTitle = req.body.title;
   const updatedPrice = req.body.price;
-  const updatedImageUrl = req.body.imageUrl;
+  const image = req.file;
   const updatedDescription = req.body.description;
   if (!errors.isEmpty()) {
     console.log(errors.array());
@@ -109,7 +132,6 @@ exports.postEditProduct = (req, res, next) => {
         //return user input
         _id: productId,
         title: updatedTitle,
-        imageUrl: updatedImageUrl,
         price: updatedPrice,
         description: updatedDescription,
       },
@@ -122,7 +144,7 @@ exports.postEditProduct = (req, res, next) => {
       product.title = updatedTitle;
       product.price = updatedPrice;
       product.description = updatedDescription;
-      product.imageUrl = updatedImageUrl;
+      if (image) product.imageUrl = image.path;
       return product.save();
     })
     .then((result) => {
