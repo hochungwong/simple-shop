@@ -67,12 +67,12 @@ exports.postLogin = (req, res, next) => {
         });
       }
       bcrypt
-        .compare(password, user["password"])
+        .compare(password, user.password)
         .then((doMatch) => {
           if (doMatch) {
             req.session.isLoggedIn = true;
             //save user to session
-            // req.session.user = user;
+            req.session.user = user;
             //save session to database then redirect to index page
             return req.session.save((err) => {
               console.log(err);
