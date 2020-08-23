@@ -6,34 +6,65 @@ const PDFDocument = require("pdfkit");
 const Product = require("../models/product");
 const Order = require("../models/order");
 
+const ITEM_PER_PAGE = 1;
+
 //'shop' page
 exports.getIndex = (req, res, next) => {
+  const page = +req.query.page || 1;
+  let totalItems;
   Product.find()
+    .countDocuments()
+    .then((numOfProducts) => {
+      totalItems = numOfProducts;
+      return Product.find()
+        .skip((page - 1) * ITEM_PER_PAGE) // skip the x * item per page. e.g. page (2 -1) * 2
+        .limit(ITEM_PER_PAGE); // restrict the amount of data points you fetch
+    })
     .then((products) => {
       res.render("shop/index", {
         prods: products,
         pageTitle: "Shop",
         path: "/",
+        currentPage: page,
+        hasNextPage: ITEM_PER_PAGE * page < totalItems, // item per page times page still less than totalItems
+        hasPrevPage: page > 1, // page num greater than 1
+        nextPage: page + 1,
+        prevPage: page - 1,
+        lastPage: Math.ceil(totalItems / ITEM_PER_PAGE), // 11 items, 2 per page, 11 / 2 = 5.5, ceil -> 6. return 6 as last page
       });
     })
     .catch((err) => {
-      console.log(err);
+      return next(err);
     });
 };
 
 //'product' page
 exports.getProducts = (req, res, next) => {
+  const page = +req.query.page || 1;
+  let totalItems;
   Product.find()
+    .countDocuments()
+    .then((numOfProducts) => {
+      totalItems = numOfProducts;
+      return Product.find()
+        .skip((page - 1) * ITEM_PER_PAGE) // skip the x * item per page. e.g. page (2 -1) * 2
+        .limit(ITEM_PER_PAGE); // restrict the amount of data points you fetch
+    })
     .then((products) => {
-      console.log("shop controller|getProducts", products);
       res.render("shop/product-list", {
         prods: products,
-        pageTitle: "All Products",
+        pageTitle: "Products",
         path: "/products",
+        currentPage: page,
+        hasNextPage: ITEM_PER_PAGE * page < totalItems, // item per page times page still less than totalItems
+        hasPrevPage: page > 1, // page num greater than 1
+        nextPage: page + 1,
+        prevPage: page - 1,
+        lastPage: Math.ceil(totalItems / ITEM_PER_PAGE), // 11 items, 2 per page, 11 / 2 = 5.5, ceil -> 6. return 6 as last page
       });
     })
     .catch((err) => {
-      console.log(err);
+      return next(err);
     });
 };
 
